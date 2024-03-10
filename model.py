@@ -67,14 +67,14 @@ class OutBlock(nn.Module):
         return self.block(x)
 
 class Generator(nn.Module):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, ch_in) -> None:
+        super().__init__()
 
         self.init = InitLayer(100,1024)
         self.up_block_1 = UpBlock(1024, 512)
         self.up_block_2 = UpBlock(512, 256)
         self.up_block_3 = UpBlock(256, 128)
-        self.up_block_4 = OutBlock(128, 3)
+        self.up_block_4 = OutBlock(128, ch_in)
         self.block = seq(
             self.init,
             self.up_block_1,
@@ -111,11 +111,12 @@ class DownBlock(nn.Module):
         return self.block(x)
     
 class PredBlock(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, ch_in) -> None:
         super().__init__()
 
         self.block = seq(
             nn.Flatten(),
+            linear(4*4*ch_in, 2),
             nn.Sigmoid()
         )
 
@@ -123,11 +124,11 @@ class PredBlock(nn.Module):
         return self.block(x)
 
 class Discriminator(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, ch_in) -> None:
         super().__init__()
 
-        self.down_block_1 = DownBlock(3,3)
-        self.pred_block = PredBlock()
+        self.down_block_1 = DownBlock(ch_in, ch_in)
+        self.pred_block = PredBlock(ch_in)
         self.block = seq(
             self.down_block_1,
             self.down_block_1,
